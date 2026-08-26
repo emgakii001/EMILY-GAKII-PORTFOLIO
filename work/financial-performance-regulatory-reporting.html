@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Financial Performance &amp; Regulatory Reporting Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --navy:#0B2545;
+    --navy-2:#123163;
+    --navy-soft:#E9EDF4;
+    --ink:#181B20;
+    --ink-soft:#5B6472;
+    --bg:#F5F6F8;
+    --card:#FFFFFF;
+    --border:#E2E5EB;
+    --accent:#9C6B30;
+    --accent-soft:#F3E9DA;
+    --pos:#2E6F52;
+    --pos-soft:#E5F1EB;
+    --neg:#9B3A34;
+    --neg-soft:#F6E9E8;
+    --sans:'Inter',system-ui,-apple-system,Segoe UI,sans-serif;
+    --serif:'Source Serif 4',Georgia,'Times New Roman',serif;
+    --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; font-family:var(--sans); color:var(--ink); background:var(--bg);
+    -webkit-font-smoothing:antialiased;
+  }
+  .num{font-family:var(--mono); font-variant-numeric:tabular-nums;}
+  a{color:inherit;}
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    background:var(--navy); color:#fff; position:sticky; top:0; z-index:50;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  .topbar-inner{
+    max-width:1200px; margin:0 auto; padding:14px 24px;
+    display:flex; align-items:center; justify-content:space-between; gap:20px;
+  }
+  .brand{display:flex; flex-direction:column; line-height:1.15;}
+  .brand .org{font-family:var(--serif); font-size:15px; letter-spacing:.03em; color:#C9D3E3; font-weight:600;}
+  .brand .title{font-family:var(--serif); font-size:19px; font-weight:600;}
+  nav.crumbs{display:flex; gap:2px; flex-wrap:wrap;}
+  nav.crumbs a{
+    font-size:12.5px; padding:7px 11px; border-radius:3px; text-decoration:none;
+    color:#C9D3E3; letter-spacing:.02em; white-space:nowrap; transition:background .15s, color .15s;
+    border:1px solid transparent;
+  }
+  nav.crumbs a:hover{color:#fff; background:rgba(255,255,255,0.06);}
+  nav.crumbs a.active{color:#fff; background:rgba(255,255,255,0.10); border-color:rgba(255,255,255,0.12);}
+
+  /* ---------- Header / hero ---------- */
+  .hero{background:var(--navy); color:#fff; padding:8px 24px 40px;}
+  .hero-inner{max-width:1200px; margin:0 auto;}
+  .hero h1{
+    font-family:var(--serif); font-weight:600; font-size:clamp(26px,3.4vw,38px);
+    margin:6px 0 8px; letter-spacing:-.01em;
+  }
+  .hero p.sub{color:#B7C3D6; font-size:15.5px; max-width:640px; margin:0 0 18px; line-height:1.55;}
+  .hero .meta{display:flex; gap:22px; flex-wrap:wrap; font-size:12.5px; color:#94A4BE; border-top:1px solid rgba(255,255,255,0.12); padding-top:14px;}
+  .hero .meta b{color:#E9EDF4; font-weight:600;}
+
+  /* ---------- Layout ---------- */
+  .wrap{max-width:1200px; margin:0 auto; padding:0 24px;}
+  section.block{padding:52px 0 8px;}
+  section.block:first-of-type{padding-top:40px;}
+  .section-head{display:flex; align-items:baseline; gap:14px; margin-bottom:6px; border-bottom:2px solid var(--navy); padding-bottom:12px;}
+  .section-no{font-family:var(--mono); font-size:13px; color:var(--accent); font-weight:600; letter-spacing:.06em;}
+  .section-head h2{font-family:var(--serif); font-size:25px; font-weight:600; margin:0; color:var(--navy);}
+  .section-sub{color:var(--ink-soft); font-size:14px; margin:10px 0 26px; max-width:760px; line-height:1.55;}
+
+  /* ---------- KPI cards ---------- */
+  .kpi-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(178px,1fr)); gap:12px; margin-bottom:30px;}
+  .kpi{
+    background:var(--card); border:1px solid var(--border); border-radius:6px; padding:16px 17px;
+    border-top:3px solid var(--navy);
+  }
+  .kpi.accent{border-top-color:var(--accent);}
+  .kpi.pos{border-top-color:var(--pos);}
+  .kpi.neg{border-top-color:var(--neg);}
+  .kpi .label{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); font-weight:600; margin-bottom:8px;}
+  .kpi .value{font-family:var(--mono); font-size:21px; font-weight:600; color:var(--navy); line-height:1.2;}
+  .kpi .value.small{font-size:16px;}
+  .kpi .foot{font-size:11.5px; color:var(--ink-soft); margin-top:6px;}
+  .kpi .foot.pos{color:var(--pos);}
+  .kpi .foot.neg{color:var(--neg);}
+
+  /* ---------- Cards / panels ---------- */
+  .panel{background:var(--card); border:1px solid var(--border); border-radius:6px; padding:22px 24px; margin-bottom:22px;}
+  .panel h3{font-family:var(--serif); font-size:17px; margin:0 0 4px; color:var(--navy); font-weight:600;}
+  .panel .panel-desc{font-size:13px; color:var(--ink-soft); margin:0 0 18px;}
+
+  /* ---------- Observations ---------- */
+  .obs-list{list-style:none; margin:0; padding:0; display:grid; gap:10px;}
+  .obs-list li{
+    font-size:14px; line-height:1.6; padding:12px 14px 12px 16px; background:var(--navy-soft);
+    border-left:3px solid var(--navy); border-radius:0 4px 4px 0;
+  }
+
+  /* ---------- Filters / buttons ---------- */
+  .filter-row{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:16px;}
+  .chip{
+    font-family:var(--sans); font-size:12.5px; font-weight:600; padding:7px 13px; border-radius:16px;
+    border:1px solid var(--border); background:#fff; color:var(--ink-soft); cursor:pointer; transition:all .15s;
+  }
+  .chip:hover{border-color:var(--navy);}
+  .chip.active{background:var(--navy); color:#fff; border-color:var(--navy);}
+  .search-box{
+    margin-left:auto; font-family:var(--sans); font-size:13px; padding:7px 12px; border:1px solid var(--border);
+    border-radius:16px; min-width:200px; outline:none;
+  }
+  .search-box:focus{border-color:var(--accent);}
+
+  /* ---------- Tables ---------- */
+  table{width:100%; border-collapse:collapse; font-size:13.5px;}
+  thead th{
+    text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:#fff;
+    background:var(--navy); padding:10px 12px; font-weight:600; position:sticky; top:0;
+  }
+  thead th.num, td.num{text-align:right;}
+  thead th.sortable{cursor:pointer; user-select:none;}
+  thead th.sortable:hover{background:var(--navy-2);}
+  thead th .arrow{opacity:.5; font-size:10px; margin-left:3px;}
+  tbody td{padding:9px 12px; border-bottom:1px solid var(--border); vertical-align:middle;}
+  tbody tr:hover{background:var(--navy-soft);}
+  .table-scroll{overflow-x:auto; border:1px solid var(--border); border-radius:6px;}
+  .table-scroll table{min-width:640px;}
+
+  .status-pill{
+    display:inline-block; font-size:11px; font-weight:600; padding:3px 10px; border-radius:12px; letter-spacing:.02em;
+  }
+  .status-pill.met{background:var(--pos-soft); color:var(--pos);}
+  .status-pill.notmet{background:var(--neg-soft); color:var(--neg);}
+  .flag-mark{color:var(--accent); font-weight:700; cursor:help; margin-left:4px;}
+  .branch-name{font-weight:600; color:var(--navy);}
+  .branch-name.admin{font-style:italic; color:var(--ink-soft); font-weight:500;}
+  .delta-pos{color:var(--pos); font-weight:600;}
+  .delta-neg{color:var(--neg); font-weight:600;}
+
+  /* ---------- Chart containers ---------- */
+  .chart-box{position:relative; width:100%;}
+  .chart-box.tall{height:460px;}
+  .chart-box.mid{height:340px;}
+  .two-col{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+  @media (max-width:880px){ .two-col{grid-template-columns:1fr;} }
+
+  /* ---------- Regulatory gauges (signature element) ---------- */
+  .gauge-legend{display:flex; gap:22px; flex-wrap:wrap; font-size:12px; color:var(--ink-soft); margin-bottom:18px; padding-bottom:14px; border-bottom:1px solid var(--border);}
+  .gauge-legend span{display:inline-flex; align-items:center; gap:6px;}
+  .lg-dot{width:9px; height:9px; border-radius:50%; display:inline-block;}
+  .lg-swatch{width:13px; height:9px; display:inline-block; border-radius:2px;}
+  .gauge-row{display:grid; grid-template-columns:230px 1fr 90px; align-items:center; gap:16px; padding:14px 0; border-bottom:1px solid var(--border);}
+  .gauge-row:last-child{border-bottom:none;}
+  .gauge-name{font-size:13.5px; font-weight:600; color:var(--navy); line-height:1.35;}
+  .gauge-name .std{display:block; font-size:11px; color:var(--ink-soft); font-weight:500; font-family:var(--mono); margin-top:3px;}
+  .gauge-svg{width:100%; height:44px; display:block;}
+  .gauge-status{text-align:right;}
+  @media (max-width:720px){
+    .gauge-row{grid-template-columns:1fr; gap:6px;}
+    .gauge-status{text-align:left;}
+  }
+
+  /* ---------- Insights grid ---------- */
+  .insight-card{margin-bottom:16px;}
+  .insight-card .tag{
+    display:inline-block; font-size:10.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--accent); margin-bottom:8px;
+  }
+  .insight-card p, .insight-card ul{font-size:13.8px; line-height:1.65; color:var(--ink); margin:0 0 8px;}
+  .insight-card ul{padding-left:18px; margin:6px 0 0;}
+  .insight-card li{margin-bottom:6px;}
+
+  /* ---------- Footer / notes ---------- */
+  .note-box{
+    background:var(--accent-soft); border:1px solid #E2CFAE; border-radius:6px; padding:16px 18px; font-size:13px;
+    color:#6B4A1E; line-height:1.6; margin-bottom:18px;
+  }
+  .flag-box{
+    background:#FBF3E8; border:1px dashed var(--accent); border-radius:6px; padding:14px 16px; font-size:13px;
+    color:#6B4A1E; line-height:1.6; margin-top:10px;
+  }
+  .checklist{list-style:none; margin:0; padding:0; columns:2; column-gap:28px; font-size:13px;}
+  @media (max-width:720px){.checklist{columns:1;}}
+  .checklist li{margin-bottom:8px; padding-left:20px; position:relative; break-inside:avoid;}
+  .checklist li::before{content:"✓"; position:absolute; left:0; color:var(--pos); font-weight:700;}
+
+  footer{padding:36px 0 60px; color:var(--ink-soft); font-size:12px; border-top:1px solid var(--border); margin-top:30px;}
+  footer .wrap{display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;}
+
+  ::-webkit-scrollbar{height:8px; width:8px;}
+  ::-webkit-scrollbar-thumb{background:#C7CEDA; border-radius:4px;}
+</style>
+</head>
+<body>
+<a href="../work.html" id="eg-portfolio-chip" style="position:fixed;bottom:20px;right:20px;z-index:99999;display:flex;align-items:center;gap:8px;background:#16324F;color:#F8FAFC;text-decoration:none;font-family:'Manrope','Helvetica Neue',Arial,sans-serif;font-weight:700;font-size:13px;line-height:1;padding:10px 16px 10px 10px;border-radius:999px;box-shadow:0 6px 18px rgba(22,50,79,0.35);border:1px solid rgba(255,255,255,0.15);" onmouseover="this.style.background='#0f2338'" onmouseout="this.style.background='#16324F'" aria-label="Back to Emily Gakii portfolio, Work page">
+  <img src="../assets/logo/eg-monogram-reversed.svg" alt="" width="20" height="20" style="display:block;border-radius:5px;flex-shrink:0;">
+  <span>&larr;&nbsp;Portfolio</span>
+</a>
+
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="org">CAPITAL SACCO LTD</span>
+      <span class="title">Financial &amp; Regulatory Dashboard</span>
+    </div>
+    <nav class="crumbs" id="navCrumbs">
+      <a href="#exec">01 Executive Summary</a>
+      <a href="#reg">02 Regulatory Compliance</a>
+      <a href="#profit">03 Branch Profitability</a>
+      <a href="#growth">04 Branch Growth</a>
+      <a href="#insights">05 Management Insights</a>
+      <a href="#notes">06 Data &amp; Notes</a>
+    </nav>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-inner">
+    <h1>Financial Performance &amp; Regulatory Reporting Dashboard</h1>
+    <p class="sub">Management view of regulatory compliance, profitability and branch performance</p>
+    <div class="meta">
+      <span><b>Reporting period:</b> As at 31 May 2026</span>
+      <span><b>Comparatives:</b> April 2026 &middot; May 2025</span>
+      <span><b>Currency:</b> Kenya Shillings (KES)</span>
+      <span><b>Source:</b> Internal management reports — Regulatory Ratios &amp; Branch Profitability</span>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- ============ 01 EXECUTIVE SUMMARY ============ -->
+  <section class="block" id="exec">
+    <div class="section-head"><span class="section-no">01</span><h2>Executive Summary</h2></div>
+    <p class="section-sub">A management-level snapshot of regulatory standing and profitability, intended to be read in under 30 seconds.</p>
+
+    <div class="kpi-grid" id="execKpis"></div>
+
+    <div class="panel" style="margin-top:4px;">
+      <h3>Management Observations</h3>
+      <p class="panel-desc">Derived directly from the figures in this report.</p>
+      <ul class="obs-list" id="execObs"></ul>
+    </div>
+  </section>
+
+  <!-- ============ 02 REGULATORY COMPLIANCE ============ -->
+  <section class="block" id="reg">
+    <div class="section-head"><span class="section-no">02</span><h2>Regulatory Compliance</h2></div>
+    <p class="section-sub">Seven key regulatory and prudential ratios, each measured against the standard that applies to it — a minimum, a maximum, or an acceptable range.</p>
+
+    <div class="kpi-grid" id="regKpis"></div>
+
+    <div class="panel">
+      <h3>Ratio Performance Against Standard</h3>
+      <p class="panel-desc">April 2026 (faint marker) versus May 2026 (solid marker), plotted against each ratio's own regulatory threshold. Shaded bands mark the zone outside the permitted standard — direction (minimum, maximum, or range) is applied individually per ratio.</p>
+      <div class="gauge-legend">
+        <span><span class="lg-dot" style="background:var(--navy-soft); border:1.5px solid #9AA7BC;"></span>April 2026</span>
+        <span><span class="lg-dot" style="background:var(--accent);"></span>May 2026</span>
+        <span><span class="lg-swatch" style="background:var(--neg-soft); border:1px solid #E3C6C4;"></span>Outside regulatory standard</span>
+      </div>
+      <div id="gaugeContainer"></div>
+    </div>
+
+    <div class="panel">
+      <h3>Regulatory Ratio Detail</h3>
+      <p class="panel-desc">Full comparison table with source-reported status.</p>
+      <div class="filter-row">
+        <button class="chip active" data-filter="all">All ratios (7)</button>
+        <button class="chip" data-filter="met">Met</button>
+        <button class="chip" data-filter="notmet">Not met</button>
+      </div>
+      <div class="table-scroll">
+        <table id="regTable">
+          <thead>
+            <tr>
+              <th>Ratio</th>
+              <th>Regulatory Standard</th>
+              <th class="num">April 2026</th>
+              <th class="num">May 2026</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Regulatory Highlights</h3>
+      <p class="panel-desc">Ratios grouped automatically by margin against their applicable standard.</p>
+      <div id="regHighlights"></div>
+    </div>
+  </section>
+
+  <!-- ============ 03 BRANCH PROFITABILITY ============ -->
+  <section class="block" id="profit">
+    <div class="section-head"><span class="section-no">03</span><h2>Branch Profitability</h2></div>
+    <p class="section-sub">Surplus contribution by branch, May 2025 compared with May 2026. Figures are calculated directly from the reported branch data.</p>
+
+    <div class="kpi-grid" id="profitKpis"></div>
+
+    <div class="two-col">
+      <div class="panel">
+        <h3>May 2026 Surplus by Branch</h3>
+        <p class="panel-desc">Sorted highest to lowest.</p>
+        <div class="chart-box tall"><canvas id="branchBarChart"></canvas></div>
+      </div>
+      <div class="panel">
+        <h3>May 2025 vs May 2026</h3>
+        <p class="panel-desc">Year-on-year surplus comparison by branch.</p>
+        <div class="chart-box tall"><canvas id="branchCompareChart"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 04 BRANCH GROWTH ============ -->
+  <section class="block" id="growth">
+    <div class="section-head"><span class="section-no">04</span><h2>Branch Growth</h2></div>
+    <p class="section-sub">Annual growth is shown as both absolute change and percentage growth together — percentage alone can mislead where a branch moved from a small or negative base.</p>
+
+    <div class="panel">
+      <h3>Annual Percentage Growth by Branch</h3>
+      <p class="panel-desc">Scale capped at 400% to keep normal-range branches legible; outlier values are labelled and shown at true value in the table below.</p>
+      <div class="chart-box tall"><canvas id="growthChart"></canvas></div>
+      <div class="flag-box" id="growthFlagBox"></div>
+    </div>
+
+    <div class="panel">
+      <h3>Branch Performance Table</h3>
+      <p class="panel-desc">Click a column header to sort. Search filters by branch name.</p>
+      <div class="filter-row">
+        <button class="chip active" data-gfilter="all">All branches</button>
+        <button class="chip" data-gfilter="pos">Positive growth</button>
+        <button class="chip" data-gfilter="neg">Negative growth</button>
+        <input class="search-box" id="branchSearch" placeholder="Search branch…" type="text">
+      </div>
+      <div class="table-scroll">
+        <table id="growthTable">
+          <thead>
+            <tr>
+              <th class="sortable" data-key="rank">Rank<span class="arrow">↕</span></th>
+              <th class="sortable" data-key="name">Branch<span class="arrow">↕</span></th>
+              <th class="num sortable" data-key="y25">May 2025 Surplus<span class="arrow">↕</span></th>
+              <th class="num sortable" data-key="y26">May 2026 Surplus<span class="arrow">↕</span></th>
+              <th class="num sortable" data-key="abs">Absolute Change<span class="arrow">↕</span></th>
+              <th class="num sortable" data-key="pct">Annual Growth %<span class="arrow">↕</span></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 05 MANAGEMENT INSIGHTS ============ -->
+  <section class="block" id="insights">
+    <div class="section-head"><span class="section-no">05</span><h2>Management Insights</h2></div>
+    <p class="section-sub">Observations generated only from the figures contained in this report.</p>
+
+    <div class="panel insight-card">
+      <span class="tag">A — Overall Performance</span>
+      <p id="insightOverall"></p>
+    </div>
+    <div class="panel insight-card">
+      <span class="tag">B — Regulatory Position</span>
+      <p id="insightRegulatory"></p>
+    </div>
+    <div class="panel insight-card">
+      <span class="tag">C — Strongest Branch Improvements</span>
+      <ul id="insightStrong"></ul>
+    </div>
+    <div class="panel insight-card">
+      <span class="tag">D — Branches Requiring Attention</span>
+      <ul id="insightAttention"></ul>
+    </div>
+    <div class="panel insight-card">
+      <span class="tag">E — Recommended Follow-Up</span>
+      <ul id="insightFollowup"></ul>
+    </div>
+  </section>
+
+  <!-- ============ 06 DATA & CONFIDENTIALITY NOTES ============ -->
+  <section class="block" id="notes">
+    <div class="section-head"><span class="section-no">06</span><h2>Data &amp; Confidentiality Notes</h2></div>
+
+    <div class="note-box">
+      <strong>Confidentiality:</strong> Confidential information has been excluded from this portfolio presentation. The dashboard contains only selected financial performance and regulatory indicators suitable for demonstration purposes. Bank account numbers and bank balances were removed at source and have not been reconstructed, inferred, or estimated.
+    </div>
+
+    <div class="panel">
+      <h3>Data Quality &amp; Reconciliation Checks</h3>
+      <p class="panel-desc">Checks performed before this dashboard was produced.</p>
+      <ul class="checklist">
+        <li>All worksheets in the source workbook inspected</li>
+        <li>Regulatory ratio table and branch profitability table identified as source data</li>
+        <li>May 2025 branch surplus figures sum to KES 39,249,479.95 — reconciles exactly with the workbook total</li>
+        <li>May 2026 branch surplus figures sum to KES 40,899,958.40 — reconciles exactly with the workbook total</li>
+        <li>Absolute annual change recalculated as May 2026 − May 2025 for every branch</li>
+        <li>Annual growth % recalculated directly from source values for every branch</li>
+        <li>Regulatory ratio status cross-checked against the stated MIN / MAX / range standard for each ratio</li>
+        <li>No confidential banking information included</li>
+        <li>Currency displayed throughout in KES with two decimal precision on totals</li>
+      </ul>
+      <div class="flag-box">
+        <strong>Flagged inconsistency (not silently corrected):</strong> "Institutional Capital to Total Asset" is recorded in the source workbook as <strong>Met</strong> in both April and May 2026, with a reported value of 7.8% against a stated minimum standard of 8%. Numerically, 7.8% sits marginally below the 8% minimum. This dashboard reproduces the source-reported status without alteration and flags the discrepancy here for management verification, rather than silently reclassifying it.
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Scope &amp; Limitations</h3>
+      <ul class="obs-list">
+        <li>This dashboard uses only the Regulatory Ratios and Branch Profitability data contained in the uploaded workbook. No budgets, targets, prior-year regulatory history, or additional financial statements were provided or assumed.</li>
+        <li>"Head Office" is an administrative cost centre, not a revenue-generating branch. It is included in profitability totals (as reported in the source) but excluded from the branch growth ranking narrative, since its year-on-year percentage change (a negative balance becoming more negative) would otherwise read as growth.</li>
+        <li>Where a branch's 2025 base surplus was very small (e.g. Mitunguu), the resulting percentage growth figure is large and is shown alongside the absolute change for context, per Section 8 of the brief.</li>
+        <li>Where a cause for a branch's movement cannot be determined from the data provided, this dashboard states that further investigation is required rather than inferring a reason.</li>
+      </ul>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    <span>Capital SACCO Ltd — Financial Performance &amp; Regulatory Reporting Dashboard</span>
+    <span>Prepared as a portfolio case study · Figures as at 31 May 2026</span>
+  </div>
+</footer>
+
+<script>
+/* =====================================================================
+   SOURCE DATA — taken directly from the uploaded workbook.
+   REGULATORY RATIOS sheet + PROFITABILITY REPORT sheet.
+   ===================================================================== */
+
+const ratios = [
+  {no:1, name:'Core Capital to Total Asset', type:'min', min:0.10, apr:0.12, may:0.14, status:'Met'},
+  {no:2, name:'Liquidity Ratio', type:'min', min:0.15, apr:0.26, may:0.26, status:'Met'},
+  {no:3, name:'Core Capital to Total Deposits', type:'min', min:0.08, apr:0.18, may:0.21, status:'Met'},
+  {no:4, name:'Institutional Capital to Total Asset', type:'min', min:0.08, apr:0.078, may:0.078, status:'Met', flag:true},
+  {no:5, name:'Gross Non-Performing Loans to Gross Loans', type:'max', max:0.05, apr:0.24, may:0.26, status:'Not met'},
+  {no:6, name:'Total Expenses to Total Revenue', type:'range', min:0.60, max:0.75, apr:0.62, may:0.60, status:'Met'},
+  {no:7, name:'Gross Loan / Total Assets', type:'range', min:0.70, max:0.80, apr:0.753188, may:0.76, status:'Met'},
+];
+
+const branchesRaw = [
+  {name:'HEAD OFFICE', y25:-34881078.94, y26:-64089693.19, admin:true},
+  {name:'MERU',        y25:14495277.96,  y26:18274390.99},
+  {name:'KANYAKINE',   y25:1287237.97,   y26:2409335.54},
+  {name:'GATIMBI',     y25:4644202.18,   y26:9215426.70},
+  {name:'NKUBU',       y25:7138773.49,   y26:10169477.35},
+  {name:'KINORO',      y25:2347846.97,   y26:2146973.18},
+  {name:'GITHONGO',    y25:11408388.62,  y26:8965694.62},
+  {name:'TIMAU',       y25:4168743.54,   y26:5470350.36},
+  {name:'KIANGUA',     y25:4680912.02,   y26:4207765.90},
+  {name:'KIONYO',      y25:10595236.02,  y26:12579139.03},
+  {name:'KIBIRICHIA',  y25:2545616.92,   y26:5668133.31},
+  {name:'MITUNGUU',    y25:-123189.30,   y26:3226776.95, smallBase:true},
+  {name:'IGOJI',       y25:1080768.59,   y26:4362969.58},
+  {name:'CHAARIA',     y25:1302136.38,   y26:5733847.06},
+  {name:'KANGETA',     y25:5890915.36,   y26:7024620.02},
+  {name:'NAIROBI',     y25:2667692.17,   y26:5534751.00},
+];
+
+/* ---------------------------------------------------------------------
+   Derived calculations — computed here, not hardcoded.
+   --------------------------------------------------------------------- */
+branchesRaw.forEach(b=>{
+  b.abs = b.y26 - b.y25;
+  b.pct = b.y25 !== 0 ? (b.abs / Math.abs(b.y25)) * 100 : null;
+});
+
+const totalY25 = branchesRaw.reduce((s,b)=>s+b.y25,0);
+const totalY26 = branchesRaw.reduce((s,b)=>s+b.y26,0);
+const totalAbs = totalY26 - totalY25;
+const totalPct = (totalAbs/totalY25)*100;
+
+const branchesOnly = branchesRaw.filter(b=>!b.admin);
+
+function fmtKES(v, decimals){
+  decimals = decimals===undefined?0:decimals;
+  const neg = v < 0;
+  const s = Math.abs(v).toLocaleString('en-KE',{minimumFractionDigits:decimals,maximumFractionDigits:decimals});
+  return (neg?'-':'') + 'KES ' + s;
+}
+function fmtKESm(v){
+  return (v<0?'-':'') + 'KES ' + (Math.abs(v)/1000000).toFixed(2) + 'M';
+}
+function fmtPct(v, decimals){
+  decimals = decimals===undefined?1:decimals;
+  return (v>=0?'+':'') + v.toFixed(decimals) + '%';
+}
+function fmtPctPlain(v, decimals){
+  decimals = decimals===undefined?1:decimals;
+  return (v*100).toFixed(decimals) + '%';
+}
+
+/* =====================================================================
+   01 — EXECUTIVE SUMMARY
+   ===================================================================== */
+const metCount = ratios.filter(r=>r.status==='Met').length;
+const notMetCount = ratios.length - metCount;
+const complianceRate = (metCount/ratios.length)*100;
+
+const sortedByAbs = [...branchesOnly].sort((a,b)=>b.abs-a.abs);
+const strongestAbs = sortedByAbs[0];
+
+const execKpis = [
+  {label:'Total Surplus — May 2026', value:fmtKESm(totalY26), cls:'accent'},
+  {label:'Annual Surplus Growth', value:fmtPct(totalPct), foot: fmtKES(totalAbs,2)+' change', cls: totalPct>=0?'pos':'neg'},
+  {label:'Regulatory Ratios Monitored', value:ratios.length, cls:''},
+  {label:'Ratios Meeting Standard', value:metCount+' of '+ratios.length, cls:'pos'},
+  {label:'Ratios Not Meeting Standard', value:notMetCount+' of '+ratios.length, cls: notMetCount>0?'neg':'pos'},
+  {label:'Strongest Branch Growth', value:strongestAbs.name, foot: fmtKES(strongestAbs.abs,0)+' ('+fmtPct(strongestAbs.pct)+')', cls:'pos'},
+];
+document.getElementById('execKpis').innerHTML = execKpis.map(k=>`
+  <div class="kpi ${k.cls}">
+    <div class="label">${k.label}</div>
+    <div class="value ${String(k.value).length>10?'small':''}">${k.value}</div>
+    ${k.foot?`<div class="foot ${k.cls==='pos'?'pos':k.cls==='neg'?'neg':''}">${k.foot}</div>`:''}
+  </div>`).join('');
+
+const decliningBranches = branchesOnly.filter(b=>b.abs<0).sort((a,b)=>a.abs-b.abs);
+document.getElementById('execObs').innerHTML = `
+  <li>Total surplus increased from ${fmtKES(totalY25,2)} in May 2025 to ${fmtKES(totalY26,2)} in May 2026, representing approximately ${fmtPct(totalPct)} annual growth (excluding Head Office administrative costs, the branch network alone grew from ${fmtKES(branchesOnly.reduce((s,b)=>s+b.y25,0),2)} to ${fmtKES(branchesOnly.reduce((s,b)=>s+b.y26,0),2)}).</li>
+  <li>${metCount} of ${ratios.length} regulatory ratios are recorded as meeting their required standard as at May 2026, a compliance rate of ${complianceRate.toFixed(1)}%. One ratio — Gross Non-Performing Loans to Gross Loans — is above its stated maximum and represents an area requiring management attention.</li>
+  <li>${strongestAbs.name} recorded the strongest branch improvement in absolute terms (${fmtKES(strongestAbs.abs,0)}, ${fmtPct(strongestAbs.pct)}), while ${decliningBranches.length} branches recorded a year-on-year decline in surplus.</li>
+  <li>Liquidity, core capital and deposit-coverage ratios all sit comfortably above their regulatory minimums, indicating no immediate capital or liquidity concern at the institutional level.</li>
+`;
+
+/* =====================================================================
+   02 — REGULATORY COMPLIANCE
+   ===================================================================== */
+document.getElementById('regKpis').innerHTML = [
+  {label:'Ratios Monitored', value:ratios.length, cls:''},
+  {label:'Meeting Standard', value:metCount, cls:'pos'},
+  {label:'Not Meeting Standard', value:notMetCount, cls: notMetCount>0?'neg':'pos'},
+  {label:'Compliance Rate', value:complianceRate.toFixed(1)+'%', cls: complianceRate>=85?'pos':'accent'},
+].map(k=>`<div class="kpi ${k.cls}"><div class="label">${k.label}</div><div class="value">${k.value}</div></div>`).join('');
+
+function standardText(r){
+  if(r.type==='min') return 'Minimum '+fmtPctPlain(r.min,0);
+  if(r.type==='max') return 'Maximum '+fmtPctPlain(r.max,0);
+  return fmtPctPlain(r.min,0)+' – '+fmtPctPlain(r.max,0);
+}
+function statusClass(s){ return s.trim().toLowerCase()==='met' ? 'met' : 'notmet'; }
+function statusLabel(s){ return s.trim().toLowerCase()==='met' ? 'MET' : 'NOT MET'; }
+
+// Regulatory table
+const regTbody = document.querySelector('#regTable tbody');
+function renderRegTable(filter){
+  filter = filter||'all';
+  regTbody.innerHTML = ratios.filter(r=>{
+    if(filter==='met') return statusClass(r.status)==='met';
+    if(filter==='notmet') return statusClass(r.status)==='notmet';
+    return true;
+  }).map(r=>`
+    <tr>
+      <td>${r.name}${r.flag?'<span class="flag-mark" title="Source status shown as Met; reported value is marginally below the stated minimum. See Section 06 for detail.">⚑</span>':''}</td>
+      <td class="num" style="text-align:left">${standardText(r)}</td>
+      <td class="num">${fmtPctPlain(r.apr)}</td>
+      <td class="num">${fmtPctPlain(r.may)}</td>
+      <td><span class="status-pill ${statusClass(r.status)}">${statusLabel(r.status)}</span></td>
+    </tr>`).join('');
+}
+renderRegTable('all');
+document.querySelectorAll('[data-filter]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('[data-filter]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    renderRegTable(btn.dataset.filter);
+  });
+});
+
+// Regulatory gauges (signature bullet/threshold visualization)
+function buildGauge(r){
+  const W = 600, H = 44;
+  const values = [r.apr, r.may];
+  let thresholds = r.type==='range' ? [r.min, r.max] : (r.type==='min'? [r.min] : [r.max]);
+  const scaleMax = Math.max(...values, ...thresholds) * 1.3;
+  const x = v => 6 + (v/scaleMax) * (W-12);
+
+  let restricted = '';
+  if(r.type==='min'){
+    restricted = `<rect x="${x(0)}" y="14" width="${x(r.min)-x(0)}" height="16" fill="var(--neg-soft)" stroke="#E3C6C4" stroke-width="1"/>`;
+  } else if(r.type==='max'){
+    restricted = `<rect x="${x(r.max)}" y="14" width="${x(scaleMax)-x(r.max)}" height="16" fill="var(--neg-soft)" stroke="#E3C6C4" stroke-width="1"/>`;
+  } else {
+    restricted = `<rect x="${x(0)}" y="14" width="${x(r.min)-x(0)}" height="16" fill="var(--neg-soft)" stroke="#E3C6C4" stroke-width="1"/>
+                  <rect x="${x(r.max)}" y="14" width="${x(scaleMax)-x(r.max)}" height="16" fill="var(--neg-soft)" stroke="#E3C6C4" stroke-width="1"/>`;
+  }
+
+  let thresholdLines = thresholds.map(t=>`<line x1="${x(t)}" y1="8" x2="${x(t)}" y2="36" stroke="var(--navy)" stroke-width="1.5" stroke-dasharray="3,2"/>`).join('');
+
+  const aprX = x(r.apr), mayX = x(r.may);
+  const connector = `<line x1="${aprX}" y1="22" x2="${mayX}" y2="22" stroke="#B9BFCB" stroke-width="2"/>`;
+  const aprDot = `<circle cx="${aprX}" cy="22" r="5" fill="var(--navy-soft)" stroke="#8493AC" stroke-width="1.5"/>`;
+  const mayDot = `<circle cx="${mayX}" cy="22" r="6.5" fill="var(--accent)" stroke="#7C551F" stroke-width="1"/>`;
+  const mayLabel = `<text x="${mayX}" y="${mayX>W-60?12:12}" text-anchor="middle" font-size="11" font-weight="600" fill="var(--accent)" font-family="var(--mono)">${fmtPctPlain(r.may)}</text>`;
+
+  return `<svg class="gauge-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <rect x="${x(0)}" y="14" width="${x(scaleMax)-x(0)}" height="16" fill="none" stroke="var(--border)" stroke-width="1"/>
+    ${restricted}
+    ${thresholdLines}
+    ${connector}
+    ${aprDot}
+    ${mayDot}
+    ${mayLabel}
+  </svg>`;
+}
+
+document.getElementById('gaugeContainer').innerHTML = ratios.map(r=>`
+  <div class="gauge-row">
+    <div class="gauge-name">${r.no}. ${r.name}${r.flag?' <span class="flag-mark" title="Flagged — see Section 06">⚑</span>':''}<span class="std">${standardText(r)}</span></div>
+    <div>${buildGauge(r)}</div>
+    <div class="gauge-status"><span class="status-pill ${statusClass(r.status)}">${statusLabel(r.status)}</span></div>
+  </div>
+`).join('');
+
+// Regulatory highlights (auto-classified by margin to threshold)
+function marginPct(r){
+  if(r.type==='min') return (r.may - r.min)*100;
+  if(r.type==='max') return (r.max - r.may)*100;
+  return Math.min(r.may-r.min, r.max-r.may)*100;
+}
+const comfortable = [], close = [], outside = [];
+ratios.forEach(r=>{
+  if(statusClass(r.status)==='notmet'){ outside.push(r); return; }
+  const m = marginPct(r);
+  if(m <= 2) close.push(r); else comfortable.push(r);
+});
+function listRatios(arr){
+  return arr.map(r=>`<li>${r.name} — May 2026 at ${fmtPctPlain(r.may)} (standard: ${standardText(r)})${r.flag?' <span class="flag-mark" title="See Section 06">⚑</span>':''}</li>`).join('');
+}
+document.getElementById('regHighlights').innerHTML = `
+  <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:16px;">
+    <div>
+      <span class="status-pill met" style="margin-bottom:8px; display:inline-block;">Comfortably within standard</span>
+      <ul class="obs-list" style="margin-top:8px;">${listRatios(comfortable)}</ul>
+    </div>
+    <div>
+      <span class="status-pill" style="background:var(--accent-soft); color:var(--accent); margin-bottom:8px; display:inline-block;">Close to threshold</span>
+      <ul class="obs-list" style="margin-top:8px;">${listRatios(close)}</ul>
+    </div>
+    <div>
+      <span class="status-pill notmet" style="margin-bottom:8px; display:inline-block;">Outside required standard</span>
+      <ul class="obs-list" style="margin-top:8px;">${listRatios(outside)}</ul>
+    </div>
+  </div>
+  <div class="flag-box">
+    Gross Non-Performing Loans to Gross Loans was above the stated maximum standard in May 2026 and therefore represents an area requiring management attention. This does not by itself indicate that the SACCO is financially unsafe or failing overall — the remaining six ratios monitored are recorded as meeting their required standards.
+  </div>
+`;
+
+/* Guard chart creation so a CDN load failure (e.g. offline) cannot break
+   the rest of the dashboard (tables, insights, notes). */
+function makeChart(el, config){
+  if(typeof Chart === 'undefined'){
+    if(el && el.parentElement){ el.parentElement.insertAdjacentHTML('beforeend','<p style="font-size:12px;color:var(--ink-soft);padding:10px 0;">Chart library could not be loaded (no internet connection). Figures remain available in the tables on this page.</p>'); }
+    return null;
+  }
+  try{ return new Chart(el, config); }
+  catch(e){ console.error('Chart render failed:', e); return null; }
+}
+
+/* =====================================================================
+   03 — BRANCH PROFITABILITY
+   ===================================================================== */
+document.getElementById('profitKpis').innerHTML = [
+  {label:'Total Surplus — May 2025', value:fmtKESm(totalY25), cls:''},
+  {label:'Total Surplus — May 2026', value:fmtKESm(totalY26), cls:'accent'},
+  {label:'Absolute Change', value:fmtKES(totalAbs,0), cls: totalAbs>=0?'pos':'neg'},
+  {label:'Overall Annual Growth', value:fmtPct(totalPct), cls: totalPct>=0?'pos':'neg'},
+].map(k=>`<div class="kpi ${k.cls}"><div class="label">${k.label}</div><div class="value small">${k.value}</div></div>`).join('');
+
+const sortedBarData = [...branchesRaw].sort((a,b)=>b.y26-a.y26);
+makeChart(document.getElementById('branchBarChart'), {
+  type:'bar',
+  data:{
+    labels: sortedBarData.map(b=>b.name),
+    datasets:[{
+      label:'May 2026 Surplus (KES)',
+      data: sortedBarData.map(b=>b.y26),
+      backgroundColor: sortedBarData.map(b=> b.admin ? '#B9BFCB' : (b.y26>=0 ? '#12345C' : '#9B3A34')),
+      borderRadius:2,
+      barThickness:14,
+    }]
+  },
+  options:{
+    indexAxis:'y',
+    responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{display:false},
+      tooltip:{ callbacks:{ label: c => fmtKES(c.raw,2) } }
+    },
+    scales:{
+      x:{ ticks:{ callback:v=>(v/1000000).toFixed(0)+'M', font:{family:'Inter',size:11} }, grid:{color:'#EDEFF3'} },
+      y:{ ticks:{ font:{family:'Inter',size:11} }, grid:{display:false} }
+    }
+  }
+});
+
+makeChart(document.getElementById('branchCompareChart'), {
+  type:'bar',
+  data:{
+    labels: branchesOnly.map(b=>b.name),
+    datasets:[
+      {label:'May 2025', data:branchesOnly.map(b=>b.y25), backgroundColor:'#A9B3C4', borderRadius:2},
+      {label:'May 2026', data:branchesOnly.map(b=>b.y26), backgroundColor:'#9C6B30', borderRadius:2},
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{position:'top', labels:{font:{family:'Inter',size:11.5}, boxWidth:12}},
+      tooltip:{ callbacks:{ label: c => c.dataset.label+': '+fmtKES(c.raw,2) } }
+    },
+    scales:{
+      x:{ ticks:{ font:{family:'Inter',size:10}, maxRotation:60, minRotation:60 }, grid:{display:false} },
+      y:{ ticks:{ callback:v=>(v/1000000).toFixed(0)+'M', font:{family:'Inter',size:11} }, grid:{color:'#EDEFF3'} }
+    }
+  }
+});
+/* =====================================================================
+   04 — BRANCH GROWTH
+   ===================================================================== */
+const CAP = 400;
+const growthChartData = [...branchesOnly].sort((a,b)=>b.pct-a.pct);
+makeChart(document.getElementById('growthChart'), {
+  type:'bar',
+  data:{
+    labels: growthChartData.map(b=>b.name),
+    datasets:[{
+      label:'Annual Growth %',
+      data: growthChartData.map(b=>Math.max(Math.min(b.pct, CAP), -CAP)),
+      backgroundColor: growthChartData.map(b=> b.pct>=0 ? (b.pct>CAP? '#C79A55' : '#2E6F52') : '#9B3A34'),
+      borderRadius:2,
+      barThickness:16,
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{display:false},
+      tooltip:{ callbacks:{
+        label: c => {
+          const b = growthChartData[c.dataIndex];
+          const capped = Math.abs(b.pct) > CAP ? ' (off-scale — true value shown)' : '';
+          return ['Growth: '+fmtPct(b.pct)+capped, 'Absolute change: '+fmtKES(b.abs,0)];
+        }
+      }}
+    },
+    scales:{
+      y:{ min:-CAP, max:CAP, ticks:{ callback:v=>v+'%', font:{family:'Inter',size:11} }, grid:{color:'#EDEFF3'} },
+      x:{ ticks:{ font:{family:'Inter',size:10}, maxRotation:60, minRotation:60 }, grid:{display:false} }
+    }
+  }
+});
+const offScale = branchesOnly.filter(b=>Math.abs(b.pct) > CAP);
+document.getElementById('growthFlagBox').innerHTML = offScale.length ?
+  `<strong>Off-scale value${offScale.length>1?'s':''}:</strong> ` + offScale.map(b=>
+    `${b.name} grew ${fmtPct(b.pct)} year-on-year — driven by a very small May 2025 base (${fmtKES(b.y25,2)}). The chart above caps this at ${CAP}% to keep the remaining branches legible; see the table below for exact figures.`
+  ).join(' ') : '';
+
+// Growth table
+let growthSort = {key:'y26', dir:'desc'};
+let growthFilter = 'all';
+let growthSearch = '';
+
+function computeGrowthRows(){
+  const rankedAll = [...branchesOnly].sort((a,b)=>b.abs-a.abs).map((b,i)=>({...b, rank:i+1}));
+  let rows = rankedAll;
+  if(growthFilter==='pos') rows = rows.filter(b=>b.abs>=0);
+  if(growthFilter==='neg') rows = rows.filter(b=>b.abs<0);
+  if(growthSearch) rows = rows.filter(b=>b.name.toLowerCase().includes(growthSearch));
+  const dirMul = growthSort.dir==='asc' ? 1 : -1;
+  rows = [...rows].sort((a,b)=>{
+    let av = a[growthSort.key], bv = b[growthSort.key];
+    if(typeof av === 'string') return av.localeCompare(bv)*dirMul;
+    return (av-bv)*dirMul;
+  });
+  return rows;
+}
+function renderGrowthTable(){
+  const rows = computeGrowthRows();
+  document.querySelector('#growthTable tbody').innerHTML = rows.map(b=>`
+    <tr>
+      <td class="num">${b.rank}</td>
+      <td class="branch-name">${b.name}${b.smallBase?' <span class="flag-mark" title="Small 2025 base — percentage growth is exaggerated; absolute change is the more reliable measure.">⚑</span>':''}</td>
+      <td class="num">${fmtKES(b.y25,2)}</td>
+      <td class="num">${fmtKES(b.y26,2)}</td>
+      <td class="num ${b.abs>=0?'delta-pos':'delta-neg'}">${b.abs>=0?'+':''}${fmtKES(b.abs,2)}</td>
+      <td class="num ${b.pct>=0?'delta-pos':'delta-neg'}">${fmtPct(b.pct)}</td>
+    </tr>`).join('');
+  document.querySelectorAll('#growthTable th.sortable .arrow').forEach(a=>a.textContent='↕');
+  const activeTh = document.querySelector(`#growthTable th[data-key="${growthSort.key}"] .arrow`);
+  if(activeTh) activeTh.textContent = growthSort.dir==='asc' ? '↑' : '↓';
+}
+document.querySelectorAll('#growthTable th.sortable').forEach(th=>{
+  th.addEventListener('click', ()=>{
+    const key = th.dataset.key;
+    if(growthSort.key===key){ growthSort.dir = growthSort.dir==='asc'?'desc':'asc'; }
+    else { growthSort = {key, dir: key==='name'?'asc':'desc'}; }
+    renderGrowthTable();
+  });
+});
+document.querySelectorAll('[data-gfilter]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('[data-gfilter]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    growthFilter = btn.dataset.gfilter;
+    renderGrowthTable();
+  });
+});
+document.getElementById('branchSearch').addEventListener('input', e=>{
+  growthSearch = e.target.value.trim().toLowerCase();
+  renderGrowthTable();
+});
+growthSort = {key:'y26', dir:'desc'};
+renderGrowthTable();
+
+/* =====================================================================
+   05 — MANAGEMENT INSIGHTS
+   ===================================================================== */
+const strongImprovers = [...branchesOnly].sort((a,b)=>b.abs-a.abs).slice(0,3);
+const attentionBranches = [...branchesOnly].filter(b=>b.abs<0).sort((a,b)=>a.abs-b.abs);
+
+document.getElementById('insightOverall').textContent =
+  `The SACCO's total surplus increased from ${fmtKES(totalY25,2)} in May 2025 to ${fmtKES(totalY26,2)} in May 2026, representing approximately ${fmtPct(totalPct)} annual growth. At branch level (excluding the Head Office administrative centre), surplus grew from ${fmtKES(branchesOnly.reduce((s,b)=>s+b.y25,0),2)} to ${fmtKES(branchesOnly.reduce((s,b)=>s+b.y26,0),2)} over the same period.`;
+
+document.getElementById('insightRegulatory').textContent =
+  `${metCount} of the ${ratios.length} regulatory ratios monitored are recorded as meeting their required standard as at May 2026. Gross Non-Performing Loans to Gross Loans was above the stated maximum standard in May 2026 and therefore represents an area requiring management attention; it also moved further from standard between April (24%) and May (26%). Institutional Capital to Total Asset is recorded as Met but its reported value sits marginally at the regulatory minimum and has been flagged for verification (see Section 06).`;
+
+document.getElementById('insightStrong').innerHTML = strongImprovers.map(b=>
+  `<li><strong>${b.name}</strong> recorded a surplus increase of ${fmtKES(b.abs,0)} (${fmtPct(b.pct)}) between May 2025 and May 2026.</li>`
+).join('') + `<li>Chaaria, Igoji and Mitunguu show substantial improvement based on the provided figures, both in absolute surplus and percentage terms.</li>`;
+
+document.getElementById('insightAttention').innerHTML = attentionBranches.map(b=>
+  `<li><strong>${b.name}</strong> recorded a decline in surplus of ${fmtKES(Math.abs(b.abs),0)} (${fmtPct(b.pct)}) and experienced a negative year-on-year movement; this requires further investigation to determine the underlying drivers.</li>`
+).join('');
+
+document.getElementById('insightFollowup').innerHTML = `
+  <li>Investigate the drivers behind the rise in Gross Non-Performing Loans to Gross Loans from 24% (April) to 26% (May), given it remains above the 5% maximum standard.</li>
+  <li>Verify the source data for Institutional Capital to Total Asset, where the reported 7.8% value sits marginally below the stated 8% minimum despite being recorded as Met.</li>
+  <li>Review Kinoro, Githongo and Kiangua branch performance to determine the underlying drivers of their year-on-year decline in surplus. Further investigation is required to determine the underlying drivers — this dashboard does not infer a cause from the data available.</li>
+  <li>Confirm whether Head Office's widening deficit (${fmtKES(branchesRaw[0].abs,0)}) reflects planned centralised cost allocation or requires separate review.</li>
+`;
+
+/* =====================================================================
+   Nav active-state on scroll
+   ===================================================================== */
+const sections = ['exec','reg','profit','growth','insights','notes'].map(id=>document.getElementById(id));
+const navLinks = Array.from(document.querySelectorAll('#navCrumbs a'));
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(entry=>{
+    if(entry.isIntersecting){
+      const id = entry.target.id;
+      navLinks.forEach(a=>a.classList.toggle('active', a.getAttribute('href')==='#'+id));
+    }
+  });
+}, {rootMargin:'-40% 0px -55% 0px'});
+sections.forEach(s=>io.observe(s));
+</script>
+</body>
+</html>
