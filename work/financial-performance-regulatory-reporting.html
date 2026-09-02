@@ -209,7 +209,7 @@
 <div class="topbar">
   <div class="topbar-inner">
     <div class="brand">
-      <span class="org">CAPITAL SACCO LTD</span>
+      <span class="org">Clearview Financial Cooperative</span>
       <span class="title">Financial &amp; Regulatory Dashboard</span>
     </div>
     <nav class="crumbs" id="navCrumbs">
@@ -420,7 +420,7 @@
       <ul class="obs-list">
         <li>This dashboard uses only the Regulatory Ratios and Branch Profitability data contained in the uploaded workbook. No budgets, targets, prior-year regulatory history, or additional financial statements were provided or assumed.</li>
         <li>"Head Office" is an administrative cost centre, not a revenue-generating branch. It is included in profitability totals (as reported in the source) but excluded from the branch growth ranking narrative, since its year-on-year percentage change (a negative balance becoming more negative) would otherwise read as growth.</li>
-        <li>Where a branch's 2025 base surplus was very small (e.g. Mitunguu), the resulting percentage growth figure is large and is shown alongside the absolute change for context, per Section 8 of the brief.</li>
+        <li>Where a branch's 2025 base surplus was very small (e.g. Clearwater), the resulting percentage growth figure is large and is shown alongside the absolute change for context, per Section 8 of the brief.</li>
         <li>Where a cause for a branch's movement cannot be determined from the data provided, this dashboard states that further investigation is required rather than inferring a reason.</li>
       </ul>
     </div>
@@ -430,7 +430,7 @@
 
 <footer>
   <div class="wrap">
-    <span>Capital SACCO Ltd — Financial Performance &amp; Regulatory Reporting Dashboard</span>
+    <span>Clearview Financial Cooperative — Financial Performance &amp; Regulatory Reporting Dashboard</span>
     <span>Prepared as a portfolio case study · Figures as at 31 May 2026</span>
   </div>
 </footer>
@@ -453,21 +453,21 @@ const ratios = [
 
 const branchesRaw = [
   {name:'HEAD OFFICE', y25:-34881078.94, y26:-64089693.19, admin:true},
-  {name:'MERU',        y25:14495277.96,  y26:18274390.99},
-  {name:'KANYAKINE',   y25:1287237.97,   y26:2409335.54},
-  {name:'GATIMBI',     y25:4644202.18,   y26:9215426.70},
-  {name:'NKUBU',       y25:7138773.49,   y26:10169477.35},
-  {name:'KINORO',      y25:2347846.97,   y26:2146973.18},
-  {name:'GITHONGO',    y25:11408388.62,  y26:8965694.62},
-  {name:'TIMAU',       y25:4168743.54,   y26:5470350.36},
-  {name:'KIANGUA',     y25:4680912.02,   y26:4207765.90},
-  {name:'KIONYO',      y25:10595236.02,  y26:12579139.03},
-  {name:'KIBIRICHIA',  y25:2545616.92,   y26:5668133.31},
-  {name:'MITUNGUU',    y25:-123189.30,   y26:3226776.95, smallBase:true},
-  {name:'IGOJI',       y25:1080768.59,   y26:4362969.58},
-  {name:'CHAARIA',     y25:1302136.38,   y26:5733847.06},
-  {name:'KANGETA',     y25:5890915.36,   y26:7024620.02},
-  {name:'NAIROBI',     y25:2667692.17,   y26:5534751.00},
+  {name:'Riverside',        y25:14495277.96,  y26:18274390.99},
+  {name:'Parkview',   y25:1287237.97,   y26:2409335.54},
+  {name:'Hillside',     y25:4644202.18,   y26:9215426.70},
+  {name:'Westfield',       y25:7138773.49,   y26:10169477.35},
+  {name:'Northgate',      y25:2347846.97,   y26:2146973.18},
+  {name:'Oakridge',    y25:11408388.62,  y26:8965694.62},
+  {name:'Eastwood',       y25:4168743.54,   y26:5470350.36},
+  {name:'Southgate',     y25:4680912.02,   y26:4207765.90},
+  {name:'Lakeside',      y25:10595236.02,  y26:12579139.03},
+  {name:'Greenfield',  y25:2545616.92,   y26:5668133.31},
+  {name:'Clearwater',    y25:-123189.30,   y26:3226776.95, smallBase:true},
+  {name:'Maplewood',       y25:1080768.59,   y26:4362969.58},
+  {name:'Clearwater',     y25:1302136.38,   y26:5733847.06},
+  {name:'Brookfield',     y25:5890915.36,   y26:7024620.02},
+  {name:'Central',     y25:2667692.17,   y26:5534751.00},
 ];
 
 /* ---------------------------------------------------------------------
@@ -841,7 +841,7 @@ document.getElementById('insightRegulatory').textContent =
 
 document.getElementById('insightStrong').innerHTML = strongImprovers.map(b=>
   `<li><strong>${b.name}</strong> recorded a surplus increase of ${fmtKES(b.abs,0)} (${fmtPct(b.pct)}) between May 2025 and May 2026.</li>`
-).join('') + `<li>Chaaria, Igoji and Mitunguu show substantial improvement based on the provided figures, both in absolute surplus and percentage terms.</li>`;
+).join('') + `<li>Clearwater, Maplewood and Clearwater show substantial improvement based on the provided figures, both in absolute surplus and percentage terms.</li>`;
 
 document.getElementById('insightAttention').innerHTML = attentionBranches.map(b=>
   `<li><strong>${b.name}</strong> recorded a decline in surplus of ${fmtKES(Math.abs(b.abs),0)} (${fmtPct(b.pct)}) and experienced a negative year-on-year movement; this requires further investigation to determine the underlying drivers.</li>`
@@ -850,8 +850,8 @@ document.getElementById('insightAttention').innerHTML = attentionBranches.map(b=
 document.getElementById('insightFollowup').innerHTML = `
   <li>Investigate the drivers behind the rise in Gross Non-Performing Loans to Gross Loans from 24% (April) to 26% (May), given it remains above the 5% maximum standard.</li>
   <li>Verify the source data for Institutional Capital to Total Asset, where the reported 7.8% value sits marginally below the stated 8% minimum despite being recorded as Met.</li>
-  <li>Review Kinoro, Githongo and Kiangua branch performance to determine the underlying drivers of their year-on-year decline in surplus. Further investigation is required to determine the underlying drivers — this dashboard does not infer a cause from the data available.</li>
-  <li>Confirm whether Head Office's widening deficit (${fmtKES(branchesRaw[0].abs,0)}) reflects planned centralised cost allocation or requires separate review.</li>
+  <li>Review Northgate, Oakridge and Southgate branch performance to determine the underlying drivers of their year-on-year decline in surplus. Further investigation is required to determine the underlying drivers — this dashboard does not infer a cause from the data available.</li>
+  <li>Confirm whether Head Office's widening deficit (${fmtKES(branchesRaw[0].abs,0)}) reflects planned Riversideised cost allocation or requires separate review.</li>
 `;
 
 /* =====================================================================
